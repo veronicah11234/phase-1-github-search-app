@@ -3,14 +3,29 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('search');
     const userList = document.getElementById('user-list');
     const reposList = document.getElementById('repos-list');
+    const searchTypeButton = document.getElementById('search-type-button');
+  
+    let currentSearchType = 'user'; // Default to searching for users
   
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       const searchTerm = searchInput.value.trim();
   
       if (searchTerm !== '') {
-        searchUsers(searchTerm);
+        if (currentSearchType === 'user') {
+          searchUsers(searchTerm);
+        } else if (currentSearchType === 'repo') {
+          searchRepos(searchTerm);
+        }
       }
+    });
+  
+    searchTypeButton.addEventListener('click', function () {
+      // Toggle between 'user' and 'repo' search types
+      currentSearchType = currentSearchType === 'user' ? 'repo' : 'user';
+  
+      // Update the placeholder text for the search input based on the current search type
+      searchInput.placeholder = currentSearchType === 'user' ? 'Search for Users' : 'Search for Repositories';
     });
   
     function searchUsers(username) {
@@ -26,6 +41,37 @@ document.addEventListener('DOMContentLoaded', function () {
         displayUsers(data.items);
       })
       .catch(error => console.error('Error fetching data:', error));
+    }
+  
+    function searchRepos(keyword) {
+      const apiUrl = `https://api.github.com/search/repositories?q=${keyword}`;
+  
+      fetch(apiUrl, {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        displayRepos(data.items);
+      })
+      .catch(error => console.error('Error fetching repos:', error));
+    }
+  
+    function getUserRepos(username) {
+      const apiUrl = `https://api.github.com/users/${username}/repos`;
+  
+      fetch(apiUrl, {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        displayRepos(data);
+        openUserReposPage(username);
+      })
+      .catch(error => console.error('Error fetching repos:', error));
     }
   
     function displayUsers(users) {
@@ -48,21 +94,6 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
   
-    function getUserRepos(username) {
-      const apiUrl = `https://api.github.com/users/${username}/repos`;
-  
-      fetch(apiUrl, {
-        headers: {
-          'Accept': 'application/vnd.github.v3+json'
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        displayRepos(data);
-      })
-      .catch(error => console.error('Error fetching repos:', error));
-    }
-  
     function displayRepos(repos) {
       reposList.innerHTML = ''; // Clear previous results
   
@@ -73,6 +104,10 @@ document.addEventListener('DOMContentLoaded', function () {
         `;
         reposList.appendChild(listItem);
       });
+    }
+  
+    function openUserReposPage(username) {
+      window.open(`https://github.com/${username}?tab=repositories`, '_blank');
     }
   });
   
